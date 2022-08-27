@@ -16,5 +16,6 @@
 
     <color name="transparent">#00000000</color>
     <color name="filled_main_button_background_pressed_state">@color/primary</color>
+    <color name="gray_default"> #838BAA </color>
 
 </resources>

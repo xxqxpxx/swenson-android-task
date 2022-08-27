@@ -11,6 +11,9 @@ object Constants {
 
     const val WEATHER_FORECAST_URL =  "forecast.json?key=$API_KEY"
 
+    const val CITY_SEARCH_URL =  "search.json?key=$API_KEY"
+
+
     const val PREFERENCE_NAME = "pref_swenson"
 
     const val REPOS_LIST_PREF_NAME = "repos_list"

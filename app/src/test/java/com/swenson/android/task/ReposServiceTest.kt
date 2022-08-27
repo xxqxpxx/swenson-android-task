@@ -1,7 +1,7 @@
 package com.swenson.android.task
 
 import android.util.Log
-import com.swenson.android.task.data.repo.ReposRepository
+import com.swenson.android.task.data.repo.WeatherRepository
 import com.swenson.android.task.network.Constants
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -28,7 +28,7 @@ class ReposServiceTest {
     var hiltAndroidRule = HiltAndroidRule(this)
 
     @Inject
-    lateinit var repository: ReposRepository
+    lateinit var repository: WeatherRepository
 
     @Before
     fun init() {

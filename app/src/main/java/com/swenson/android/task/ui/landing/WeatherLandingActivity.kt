@@ -16,6 +16,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,6 +26,8 @@ import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.swenson.android.task.base.BaseActivity
+import com.swenson.android.task.data.response.SearchCityResoponse
+import com.swenson.android.task.data.response.SearchCityResoponseItem
 import com.swenson.android.task.data.response.WeatherResponse
  import com.swenson.android.task.databinding.ActivityWeatherLandingBinding
 import com.swenson.android.task.network.ResultModel
@@ -48,14 +51,21 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
 
     private lateinit var foreCastAdapter : ForCastAdapter
 
+    private lateinit var searchItemsAdapter:SearchItemsAdapter
 
     override fun getViewBinding() = ActivityWeatherLandingBinding.inflate(layoutInflater)
+
+
+    var cityOnClickListener = (SearchItemsAdapter.OnClickListener { item ->
+        handleCitySelection(item)
+    })
+
 
     override fun setupView() {
         initListeners()
         initFusedLocationClient()
         initForeCastList()
-    } // fun of setupView
+    }
 
 
     @SuppressLint("SetTextI18n")
@@ -73,24 +83,92 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
                 tempType = "c"
             }
         }
-    } // fun of initListeners
+
+
+        binding.layoutError.button.setOnClickListener {
+            viewModel.refresh(viewModel.localCity)
+            hideErrorAndRefresh()
+        }
+
+        binding.icSearch.setOnClickListener{
+            handleSearchLayout(true)
+        }
+
+    }
+
+    private fun handleSearchLayout(showLayout: Boolean) {
+        if (showLayout){
+            binding.searchLayout.searchLayout.visibility = View.VISIBLE
+
+            binding.searchLayout.imageView2.setOnClickListener {
+                handleSearchLayout(false)
+            }
+
+            binding.searchLayout.imgClose.setOnClickListener {
+                handleSearchLayout(false)
+            }
+
+            binding.searchLayout.bottomLayoutClose.setOnClickListener{
+                handleSearchLayout(false)
+            }
+
+            binding.searchLayout.etSearch.addTextChangedListener {
+
+                if (! it.isNullOrEmpty()){
+                    if (it.length >= 2){
+                        viewModel.searchForCity(it.toString().trim())
+                    }
+                }
+
+            }
+
+        }else{
+            binding.searchLayout.searchLayout.visibility = View.GONE
+
+        }
+    }
+
+
+    private fun hideErrorAndRefresh() {
+        handleError(isError = false)
+    }
+
+
+    private fun handleError(isError: Boolean) {
+        if (isError) {
+            binding.layoutError.layoutError.visibility = View.VISIBLE
+        } else {
+            binding.layoutError.layoutError.visibility = View.GONE
+        }
+    }
+
+
 
     private fun initForeCastList()
     {
         foreCastAdapter = ForCastAdapter(context = this)
         binding.recyclerViewWeeklyWeather.layoutManager = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
         binding.recyclerViewWeeklyWeather.adapter = foreCastAdapter
-    }// fun of initForeCastList
+    }
+
+
+    private fun initCitiesList(){
+        searchItemsAdapter = SearchItemsAdapter(context = this , onClickListener = cityOnClickListener)
+        binding.searchLayout.recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        binding.searchLayout.recyclerView.adapter = searchItemsAdapter
+    }
+
 
     override fun setupViewModelObservers() {
         viewModel.weatherDataObserver.observe(this,weatherDataObserver)
-    } // fun of setupViewModelObservers
+        viewModel.searchTextDataObserver.observe(this,  searchDataObserver)
+    }
 
     private fun initFusedLocationClient()
     {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         getLocation()
-    } // fun of initFusedLocationClient
+    }
 
     private fun isLocationEnabled(): Boolean {
         val locationManager: LocationManager =
@@ -98,7 +176,7 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER
         )
-    } // fun of isLocationEnabled
+    }
 
     private fun checkPermissions(): Boolean {
         if (ActivityCompat.checkSelfPermission(
@@ -113,7 +191,7 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
             return true
         }
         return false
-    } // fun of checkPermissions
+    }
     private fun requestPermissions() {
         ActivityCompat.requestPermissions(
             this,
@@ -123,7 +201,7 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
             ),
             permissionId
         )
-    } // fun of requestPermissions
+    }
     @SuppressLint("MissingSuperCall")
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -135,7 +213,7 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
                 getLocation()
             }
         }
-    } // fun of onRequestPermissionsResult
+    }
 
     @SuppressLint("MissingPermission", "SetTextI18n")
     private fun getLocation() {
@@ -145,8 +223,7 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
                     val location: Location? = task.result
                     if (location != null) {
                         val geocoder = Geocoder(this, Locale.getDefault())
-                        val list: List<Address> =
-                            geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                        val list: List<Address> = geocoder.getFromLocation(location.latitude, location.longitude, 1)
 
                         binding.txtAddress.text = list[0].adminArea
 
@@ -162,7 +239,7 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
         } else {
             requestPermissions()
         }
-    } // fun of getLocation
+    }
 
 
     private val weatherDataObserver = Observer<ResultModel<WeatherResponse>> { result ->
@@ -170,16 +247,42 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
             when (result) {
                 is ResultModel.Loading -> {
                     handleProgress(isLoading = result.isLoading ?: false)
-                } // Loading
+                }
                 is ResultModel.Success -> {
                     onSuccess(data = result.data)
-                } // Success
+                }
                 is ResultModel.Failure -> {
                     onFail()
-                } // Fail
+                }
             }
         }
-    } // weatherDataObserver
+    }
+
+
+
+
+    private fun handleCitySelection(item: SearchCityResoponseItem) {
+        viewModel.fetchPicturesData(item.name)
+        handleSearchLayout(false)
+
+    }
+
+
+    private val searchDataObserver = Observer<ResultModel<SearchCityResoponse>> { result ->
+        lifecycleScope.launch {
+            when (result) {
+                is ResultModel.Loading -> {
+                    handleProgress(isLoading = result.isLoading ?: false)
+                }
+                is ResultModel.Success -> {
+                    onSuccess(data = result.data)
+                }
+                is ResultModel.Failure -> {
+                    onFail()
+                }
+            }
+        }
+    }
 
     private fun handleProgress(isLoading : Boolean)
     {
@@ -188,12 +291,29 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
         else
             binding.progressBar.visibility = View.GONE
 
-    } // fun of handleProgress
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun onSuccess(data : SearchCityResoponse)
+    {
+        showCitiesRecycler()
+        initCitiesList()
+
+        searchItemsAdapter.submitList(data)
+    }
+
+    private fun showCitiesRecycler() {
+        binding.searchLayout.recyclerView.visibility = View.VISIBLE
+        binding.searchLayout.bottomLayoutClose.visibility = View.VISIBLE
+    }
 
     @SuppressLint("SetTextI18n")
     private fun onSuccess(data : WeatherResponse)
     {
         handleProgress(isLoading = false)
+
+
+        binding.txtAddress.text = viewModel.localCity
 
         tempC = data.current?.temp_c ?: 0.0
         tempF = data.current?.temp_f ?: 0.0
@@ -217,12 +337,15 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
     //    binding.txtWindDegree.text = "Wind Degree : ${data.current?.wind_degree} °"
 
         foreCastAdapter.submitList(data.forecast?.forecastday ?: arrayListOf())
-    } // fun of onSuccess
+    }
 
     private fun onFail()
     {
         handleProgress(isLoading = false)
+        handleError(isError = true)
 
-    } // fun of onFail
+    }
+
+
 
 }
