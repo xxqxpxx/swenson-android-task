@@ -125,6 +125,10 @@ class WeatherLandingActivity : BaseActivity<ActivityWeatherLandingBinding>() {
         }else{
             binding.searchLayout.searchLayout.visibility = View.GONE
 
+            if (searchItemsAdapter.itemCount > 0)
+               searchItemsAdapter.submitList(emptyList())
+
+            binding.searchLayout.etSearch.text.clear()
         }
     }
 

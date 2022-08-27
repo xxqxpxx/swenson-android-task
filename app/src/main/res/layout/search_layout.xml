@@ -84,7 +84,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/search_bar"
-        tools:itemCount="4"
         tools:listitem="@layout/item_city" />
 
     <LinearLayout
@@ -94,7 +93,6 @@
         android:layout_marginTop="@dimen/_25sdp"
         android:background="@drawable/bg_search_mint_bottom_rounded"
         android:gravity="center"
-        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/recyclerView">
 
         <ImageView

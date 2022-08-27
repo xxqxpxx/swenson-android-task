@@ -120,7 +120,7 @@
             android:drawablePadding="@dimen/_10sdp"
             android:gravity="center"
             android:padding="@dimen/_5sdp"
-            android:text="3mph"
+            android:text=""
             android:textSize="@dimen/_12ssp"
             android:textColor="@color/white"
             app:drawableStartCompat="@drawable/ic_wind" />
@@ -132,7 +132,7 @@
             android:layout_gravity="center_vertical|right"
             android:drawablePadding="@dimen/_10sdp"
             android:padding="@dimen/_5sdp"
-            android:text="60%"
+            android:text=""
             android:textSize="@dimen/_12ssp"
             android:textColor="@color/white"
             app:drawableStartCompat="@drawable/ic_droplet" />

@@ -21,7 +21,7 @@ import javax.inject.Inject
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
-class ReposServiceTest {
+class WeatherServiceTest {
     private val TAG = "PlanetaryServiceTest"
 
     @get:Rule
@@ -39,14 +39,29 @@ class ReposServiceTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testResponseCode() = runTest {
-        repository.fetchRepos(Constants.NUMBER_OF_REPOS_PER_PAGE)
+        repository.fetchWeatherBasedCity("Dubai")
             .catch { exception ->
                 Log.i(TAG, "Exception : ${exception.message}")
                 assert(false)
             }
             .collect { response ->
                 Log.i(TAG, "Response : $response")
-                assert(response.isSuccessful)
+                assert(response.current != null)
+            }
+    }
+
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testResponseCodeForSearch() = runTest {
+        repository.searchForCity("Ams")
+            .catch { exception ->
+                Log.i(TAG, "Exception : ${exception.message}")
+                assert(false)
+            }
+            .collect { response ->
+                Log.i(TAG, "Response : $response")
+                assert(response[0].name != null)
             }
     }
 }
